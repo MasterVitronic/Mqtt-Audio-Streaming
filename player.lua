@@ -36,7 +36,7 @@ THE SOFTWARE.
 ===============================================================================
 
 To run the server
- $ lua mqtt_streamer.lua
+ $ lua streaming.lua
 
 To play the audio on the client
  $ paho_c_sub -h ispcore.com.ve -t song/stream | aplay -t raw

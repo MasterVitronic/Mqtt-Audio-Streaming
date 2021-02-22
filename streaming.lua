@@ -56,8 +56,8 @@ local mqtt	= require('mqtt')
 --the list of audio files
 local songs	= dofile('audio_list.lua')
 
-local broker 	= 'broker.hivemq.com'
---local broker 	= 'ispcore.com.ve'
+--local broker 	= 'broker.hivemq.com'
+local broker 	= 'ispcore.com.ve'
 local topic  	= 'song'
 local port  	= 1883
 local keepalive = 60
@@ -66,9 +66,8 @@ local chunk_size= 1024
 local quit 	= false
 
 
-function onMessageArrived(_topic, message)
-	print(_topic, message)
-	if ( _topic == ('%s/cmd'):format(topic)  ) then
+function onMessageArrived(topicName, message)
+	if ( topicName == ('%s/cmd'):format(topic)  ) then
 		if ( message.payload == '/quit' ) then
 			io.write("Bye \n")
 			quit = true
@@ -116,7 +115,7 @@ function stream()
 					retained= false
 				})
 				socket.sleep(0.12)
-				collectgarbage()
+				collectgarbage("collect")
 			end
 			if quit then break end
 		end

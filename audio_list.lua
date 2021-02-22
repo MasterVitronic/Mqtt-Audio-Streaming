@@ -3,6 +3,16 @@
 --@see https://docs.yate.ro/wiki/ConvertingAudio
 local songs = {
 	{
+		name = "White noise audio",
+		desc = "30 seconds of white noise",
+		path = "songs/noise_8k.u8"
+	},
+	{
+		name = "Empty audio",
+		desc = "30 seconds of nothing",
+		path = "songs/empty_8k.u8"
+	},
+	{
 		name = "Bensound sunny",
 		desc = "Gentle acoustic royalty free music featuring guitar, marimba...",
 		path = "songs/bensound-sunny_8k.u8"

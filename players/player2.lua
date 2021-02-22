@@ -7,8 +7,10 @@
  @date      21-02-2021 12:11:21 -04
  @licence   MIT licence
 
+ @see	    https://nodemcu.readthedocs.io/en/release/modules/pcm/
  @require   https://github.com/tacigar/lua-mqtt.git
  @require   https://github.com/tdtrask/lua-subprocess
+ @require   https://en.wikipedia.org/wiki/Aplay
 
 ===============================================================================
 
@@ -35,7 +37,11 @@ THE SOFTWARE.
 ===============================================================================
 
 This program is equal to
+
  $ mosquitto_sub -h ispcore.com.ve  -t song/stream | aplay -t raw
+
+Although I must clarify that with this program a significant
+improvement in sound quality is obtained.
 
 ]]--
 
@@ -43,6 +49,8 @@ This program is equal to
 local mqtt	= require('mqtt')
 --@see https://github.com/tdtrask/lua-subprocess
 local subprocess= require("subprocess")
+--utilities
+local util 	= require("utils")
 
 --local broker 	= 'broker.hivemq.com'
 local broker 	= 'ispcore.com.ve'
@@ -54,7 +62,7 @@ local QoS	= 2
 ---The connection MQTT
 client = mqtt.AsyncClient({
 	serverURI = broker,
-	clientID  = 'MQTTAudioPlayer'
+	clientID  = 'MQTTAudioPlayer2'
 })
 
 ---Other option is play -t raw -r 8k -e unsigned -b 8 -c 1 -
@@ -67,17 +75,6 @@ local aplay, err, errno = subprocess.popen({
 	stderr = subprocess.STDOUT
 })
 
---@see https://stackoverflow.com/questions/41783274/how-to-clear-stdout-line-in-lua
-local stdout, out = '', nil
-function iop(str)
-	io.output():setvbuf("no")
-	io.output():setvbuf("line")
-	io.write(('\b \b'):rep(#stdout))  -- erase old line
-	io.write(str)                     -- write new line
-	io.flush()
-	stdout = str
-end
-
 function onMessageArrived(topicName, message)
 	if ( topicName == 'song/info' ) then
 		io.write(('\b \b'):rep(#stdout))
@@ -85,19 +82,34 @@ function onMessageArrived(topicName, message)
 		io.flush()
 	elseif ( topicName == topic ) then
 		if (stdout == '/') then out = '\\' else out = '/' end
-		iop(out)
+		util:iop(out)
 		aplay.stdin:write(message.payload)
 	end
 	collectgarbage("collect")
 end
 
-client:setCallbacks(nil, onMessageArrived, nil)
+function onDeliveryComplete()
+	io.write("onDeliveryComplete\n")
+end
+
+function onConnectionLost()
+	io.write("onConnectionLost\n")
+end
+
+client:setCallbacks(
+	onConnectionLost,
+	onMessageArrived,
+	onDeliveryComplete
+)
+
 client:connect({
-	keepAliveInterval = keepalive,
-	cleanSession	  = false,
-	mqttVersion	  = 3,
-	connectTimeout	  = 3
+	keepAliveInterval = 60,
+	cleanSession	  = true,
+	--mqttVersion	  = 3,
+	connectTimeout	  = 5,
+	retryInterval	  = 5
 })
+
 client:subscribe(topic, QoS)
 client:subscribe('song/info', QoS)
 

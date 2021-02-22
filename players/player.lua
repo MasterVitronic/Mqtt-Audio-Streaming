@@ -7,9 +7,10 @@
  @date      20-02-2021 21:11:21 -04
  @licence   MIT licence
 
- @inspired  https://github.com/leotok/multi-speakers-audio-streaming
- @require   http://luaforge.net/projects/luasocket/
+ @see	    https://nodemcu.readthedocs.io/en/release/modules/pcm/
  @require   https://github.com/tdtrask/lua-subprocess
+ @require   https://mosquitto.org/man/mosquitto_sub-1.html
+ @require   https://en.wikipedia.org/wiki/Aplay
 
 ===============================================================================
 
@@ -48,49 +49,33 @@ or
  $ lua player.lua
 ]]--
 
---@see http://luaforge.net/projects/luasocket/
-local socket	= require('socket')
 --@see https://github.com/tdtrask/lua-subprocess
 local subprocess= require("subprocess")
 
 --Define the broker MQTT
-local broker 	= 'broker.hivemq.com'
---local broker 	= 'ispcore.com.ve'
+--local broker 	= 'broker.hivemq.com'
+local broker 	= 'ispcore.com.ve'
 
 -- This is equal to
 -- $ mosquitto_sub -h ispcore.com.ve  -t song/stream | aplay -t raw
 
 ---The mosquitto_sub subprocess
-local msq_args  = {'mosquitto_sub','-h',broker, '-t', 'song/stream'}
-msq_args.stdin  = '/dev/null'
-msq_args.stdout = subprocess.PIPE
-msq_args.stderr = subprocess.STDOUT
-local msq_sub, errmsg, errno = subprocess.popen(msq_args)
+local msq_sub, errmsg, errno = subprocess.popen({
+	'mosquitto_sub','-h',broker, '-t',
+	'song/stream',
+	stdin  = '/dev/null',
+	stdout = subprocess.PIPE,
+	stderr = subprocess.STDOUT
+})
 
 ---The aplay subprocess
-local play_args  = {
+local aplay, aplay_err, aplay_errno = subprocess.popen({
 	'aplay','-q','-t','raw',
-	--'--vumeter=mono',
-	--'--channels=1',
-	--'--buffer-size=1000',
-	--'--buffer-time=200','--period-time=200'
-}
-play_args.stdin  = msq_sub.stdout
-play_args.stdout = subprocess.PIPE
-play_args.stderr = subprocess.STDOUT
-local aplay, aplay_err, aplay_errno = subprocess.popen(play_args)
-
---Show progress to STDOUT
---local last_str = ''
---while (nil == aplay:poll()) do
-	--local str = aplay.stdout:read(64)
-	--io.write(('\b \b'):rep(#last_str))  -- erase old line
-	--io.write(str)
-	--io.flush()
-	--last_str = str
-	--socket.sleep(0.06)
-	--collectgarbage()
---end
+	'--buffer-size=250',
+	stdin  = msq_sub.stdout,
+	stdout = subprocess.PIPE,
+	stderr = subprocess.STDOUT
+})
 
 msq_sub:wait()
 aplay:wait()

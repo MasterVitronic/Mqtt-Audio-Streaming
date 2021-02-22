@@ -7,8 +7,10 @@
  @date      22-02-2021 04:53:21 -04
  @licence   MIT licence
 
+ @see	    https://nodemcu.readthedocs.io/en/release/modules/pcm/
  @require   https://github.com/flukso/lua-mosquitto
  @require   https://github.com/tdtrask/lua-subprocess
+ @require   https://en.wikipedia.org/wiki/Aplay
 
 ===============================================================================
 
@@ -35,7 +37,11 @@ THE SOFTWARE.
 ===============================================================================
 
 This program is equal to
+
  $ mosquitto_sub -h ispcore.com.ve  -t song/stream | aplay -t raw
+
+Although I must clarify that with this program a significant
+improvement in sound quality is obtained.
 
 ]]--
 
@@ -43,6 +49,8 @@ This program is equal to
 local mqtt	= require('mosquitto') 
 --@see https://github.com/tdtrask/lua-subprocess
 local subprocess= require("subprocess")
+--utilities
+local util 	= require("utils")
 
 --local broker 	= 'broker.hivemq.com'
 local broker 	= 'ispcore.com.ve'
@@ -64,17 +72,6 @@ local aplay, err, errno = subprocess.popen({
 	stderr = subprocess.STDOUT
 })
 
---@see https://stackoverflow.com/questions/41783274/how-to-clear-stdout-line-in-lua
-local stdout, out = '', nil
-function iop(str)
-	io.output():setvbuf("no")
-	io.output():setvbuf("line")
-	io.write(('\b \b'):rep(#stdout))  -- erase old line
-	io.write(str)                     -- write new line
-	io.flush()
-	stdout = str
-end
-
 client=mqtt.new( 'MQTTAudioPlayer3' , true)
 client.ON_MESSAGE = function ( mid, topicName, payload )
 	if ( topicName == 'song/info' ) then
@@ -83,7 +80,7 @@ client.ON_MESSAGE = function ( mid, topicName, payload )
 		io.flush()
 	elseif ( topicName == topic ) then
 		if (stdout == '/') then out = '\\' else out = '/' end
-		iop(out)
+		util:iop(out)
 		aplay.stdin:write(payload)
 	end
 	collectgarbage("collect")

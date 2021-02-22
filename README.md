@@ -4,6 +4,10 @@ Audio streaming server and player via MQTT protocol.
 
 > This project is inspired in [multi-speakers-audio-streaming](https://github.com/leotok/multi-speakers-audio-streaming)
 
+_Author:_ _[Díaz Devera Víctor Diex Gamar (Máster Vitronic)](https://www.linkedin.com/in/Master-Vitronic)_
+
+[![Lua logo](./doc/powered-by-lua.gif)](http://www.lua.org/)
+
 ## Dependencies
 
 * [luasocket](http://luaforge.net/projects/luasocket/)

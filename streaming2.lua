@@ -68,7 +68,7 @@ client		= mqtt.new( 'MQTTAudioStream2' , true)
 
 client.ON_MESSAGE = function ( mid, topicName, payload )
 	if ( topicName == ('%s/cmd'):format(topic)  ) then
-		if ( message.payload == '/quit' ) then
+		if ( payload == '/quit' ) then
 			io.write("Bye \n")
 			quit = true
 		end
@@ -82,6 +82,7 @@ client.ON_CONNECT = function ()
 end
 
 client.ON_DISCONNECT = function ()
+	if quit then return end
 	local ok, errno, errmsg
 	repeat
 		ok, errno, errmsg = client:reconnect()
